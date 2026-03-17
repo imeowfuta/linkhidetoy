@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkHideToy</title>
+    <style>
+        body {
+            background: #000000;
+            color: #faefef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        #r {
+            color: #ff0000;
+        }
+        input, button, textarea, #output {
+            max-width: 500px;
+            padding: 0.8rem;
+            background: #141414;
+            border: 1px solid #fcedf5;
+            color: inherit;
+        }
+        #output { min-height: 50px; word-break: break-all; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <main style="text-align: center;"> 
+    <h3 id="warning">
+This is a toy, <span id="r">not</span> a <span id="r">secure</span> tool <br>
+这只是个玩具，<span id="r">并非</span><span id="r">安全</span>工具 <br>
+यह एक खिलौना है, <span id="r">कोई</span> <span id="r">सुरक्षित</span> उपकरण <span id="r">नहीं</span> <br>
+Esto es un juguete, <span id="r">no</span> una herramienta <span id="r">segura</span> <br>
+Ceci est un jouet, <span id="r">pas</span> un outil de <span id="r">sécurité</span> <br>
+هذه لعبة، و<span id="r">ليست</span> أداة <span id="r">آمنة</span> <br>
+এটি একটি খেলনা, কোনো <span id="r">নিরাপদ</span> সরঞ্জাম <span id="r">নয়</span> <br>
+Isto é um brinquedo, <span id="r">não</span> uma ferramenta de <span id="r">segurança</span> <br>
+Это игрушка, а <span id="r">не</span> <span id="r">надежный</span> инструмент <br>
+これはおもちゃであり、<span id="r">安全</span>な道具<span id="r">ではありません</span> <br>
+    </h3>
+    <label for="confirm">I UNDERSTAND</label><input type="checkbox" id="confirm"> </main>
+    <textarea id="text" placeholder="Text to hide in toy"></textarea>
+    <input type="password" id="pass" placeholder="Password">
+    <div><label for="htmlparse">parse as html (non needed for most text)</label><input type="checkbox" id="htmlparse"></div>
+    <button id="encrypt" style="cursor: pointer;" hover="cursor: pointer;">"Encrypt"</button>
+    <div id="output">Output will appear here...</div>
+
+    <script>
+        encrypt.onclick = () => {
+            let message = unescape(encodeURIComponent(text.value)); //utf-8
+            let password = pass.value;
+            
+            // warning message
+            if (!document.getElementById("confirm").checked) return alert(document.getElementById("warning").innerText);
+            if (!message) return alert("Needs a message to hide");
+            if (!password) return alert("Needs a password");
+
+            let htmlmode = document.getElementById("htmlparse").checked;
+            let output = document.getElementById("output");
+
+            const salt = Math.random().toString(36).substring(2, 10);
+
+            let state = [], stateJ = 0, stateI = 0, encryptedText = '', fullkey = password + salt, stirRounds = 5000;
+            for (let k = 0; k < 256; k++) state[k] = k;
+            for (let k = 0; k < 256; k++) { stateJ = (stateJ + state[k] + fullkey.charCodeAt(k % fullkey.length)) % 256; [state[k], state[stateJ]] = [state[stateJ], state[k]]; }
+            for (let k = 0; k < stirRounds * 256; k++) { stateI = (stateI + 1) % 256; stateJ = (stateJ + state[stateI]) % 256; [state[stateI], state[stateJ]] = [state[stateJ], state[stateI]]; }
+            stateJ = 0;
+            for (let k = 0; k < message.length; k++) { stateI = (stateI + 1) % 256; stateJ = (stateJ + state[stateI]) % 256; [state[stateI], state[stateJ]] = [state[stateJ], state[stateI]]; encryptedText += String.fromCharCode(message.charCodeAt(k) ^ state[(state[stateI] + state[stateJ]) % 256]); }
+            let base64Encrypted = btoa(encryptedText);
+            
+            if (htmlmode) {
+                let decoder = `<body><input type=password oninput="((k,s,d,n)=>{let a=[],j=0,p=0,q=0,r='';for(let i=0;i<256;i++)a[i]=i;for(let i=0;i<256;i++){j=(j+a[i]+(k+s).charCodeAt(i%(k+s).length))%256;[a[i],a[j]]=[a[j],a[i]]}for(let i=0;i<n*256;i++){p=(p+1)%256;j=(j+a[p])%256;[a[p],a[j]]=[a[j],a[p]]}p=0;j=0;for(let i=0;i<d.length;i++){p=(p+1)%256;q=(q+a[p])%256;[a[p],a[q]]=[a[q],a[p]];r+=String.fromCharCode(d.charCodeAt(i)^a[(a[p]+a[q])%256])}try{o.innerHTML=decodeURIComponent(escape(r))}catch(e){o.innerHTML=r}})(value,'${salt}',atob('${base64Encrypted}'),5000)"><div id=o>`;
+                output.innerText = 'data:text/html;base64,' + btoa(decoder);
+            } else {
+                let decoder = `<body><input type=password oninput="((k,s,d,n)=>{let a=[],j=0,p=0,q=0,r='';for(let i=0;i<256;i++)a[i]=i;for(let i=0;i<256;i++){j=(j+a[i]+(k+s).charCodeAt(i%(k+s).length))%256;[a[i],a[j]]=[a[j],a[i]]}for(let i=0;i<n*256;i++){p=(p+1)%256;j=(j+a[p])%256;[a[p],a[j]]=[a[j],a[p]]}p=0;j=0;for(let i=0;i<d.length;i++){p=(p+1)%256;q=(q+a[p])%256;[a[p],a[q]]=[a[q],a[p]];r+=String.fromCharCode(d.charCodeAt(i)^a[(a[p]+a[q])%256])}try{o.innerText=decodeURIComponent(escape(r))}catch(e){o.innerText=r}})(value,'${salt}',atob('${base64Encrypted}'),5000)"><pre id=o>`;
+                output.innerText = 'data:text/html;base64,' + btoa(decoder);
+            }
+            
+        };
+    </script>
+
+
+</body>
+</html>
